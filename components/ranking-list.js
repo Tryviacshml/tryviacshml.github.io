@@ -1,0 +1,1 @@
+class RankingList extends HTMLElement{connectedCallback(){const s=this.attachShadow({mode:'open'});s.innerHTML=`<style>:host{display:block}</style><ul><slot></slot></ul>`;}}customElements.define('ranking-list',RankingList);
