@@ -393,6 +393,8 @@
       border: 1px solid rgba(11, 99, 183, 0.06);
       min-height: 40px;
       flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
     }
 
     .dashboard-ranking-list .rank {
@@ -404,6 +406,45 @@
       font-weight: 800;
       min-width: 36px;
       text-align: center;
+      z-index: 1;
+    }
+
+    .dashboard-ranking-list .client {
+      flex: 1;
+      text-align: left;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      margin: 0 12px;
+      color: var(--tryvia-dark);
+      font-size: 0.95rem;
+      z-index: 1;
+    }
+
+    .dashboard-ranking-list .score {
+      padding: .25em .6em;
+      border-radius: 8px;
+      font-weight: 800;
+      min-width: 44px;
+      text-align: center;
+      z-index: 1;
+      font-size: 0.95rem;
+    }
+
+    .perf-meter {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.025);
+      z-index: 0;
+      transition: width 1s ease-out;
+      border-radius: 10px 0 0 10px;
+    }
+
+    .dashboard-ranking-list li {
+      position: relative;
+      overflow: hidden;
     }
 
     /* table */
@@ -965,12 +1006,16 @@
       topListDiv.innerHTML = ''; bottomListDiv.innerHTML = '';
       top5.forEach((c, i) => {
         const li = document.createElement('li');
-        li.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div class="rank">${i + 1}</div><div style="text-align:left;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${escapeHtml(c.empresa)}</div></div><div style="background:linear-gradient(90deg, var(--tryvia-blue), var(--tryvia-cyan));color:#fff;padding:.25em .6em;border-radius:8px">${Math.round(c.avg)}</div>`;
+        const score = Math.round(c.avg);
+        const meter = Math.min(100, Math.max(0, score * 10));
+        li.innerHTML = `<div class="perf-meter" style="width:${meter}%;"></div><span class="rank">${i + 1}</span><span class="client" title="${escapeHtml(c.empresa)}">${escapeHtml(c.empresa)}</span><span class="score" style="background:linear-gradient(90deg, var(--tryvia-blue), var(--tryvia-cyan));color:#fff;">${score}</span>`;
         topListDiv.appendChild(li);
       });
       bottom5.forEach((c, i) => {
         const li = document.createElement('li');
-        li.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div class="rank">${i + 1}</div><div style="text-align:left;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${escapeHtml(c.empresa)}</div></div><div style="background:linear-gradient(90deg, var(--tryvia-red), #ff7b7b);color:#fff;padding:.25em .6em;border-radius:8px">${Math.round(c.avg)}</div>`;
+        const score = Math.round(c.avg);
+        const meter = Math.min(100, Math.max(0, score * 10));
+        li.innerHTML = `<div class="perf-meter" style="width:${meter}%;"></div><span class="rank">${i + 1}</span><span class="client" title="${escapeHtml(c.empresa)}">${escapeHtml(c.empresa)}</span><span class="score" style="background:linear-gradient(90deg, var(--tryvia-red), #ff7b7b);color:#fff;">${score}</span>`;
         bottomListDiv.appendChild(li);
       });
 
