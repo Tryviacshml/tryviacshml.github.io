@@ -349,7 +349,7 @@
       padding: 12px;
       display: flex;
       flex-direction: column;
-      height: 380px;
+      height: 360px;
       box-sizing: border-box;
     }
 
@@ -385,12 +385,12 @@
       justify-content: space-between;
       background: var(--tryvia-cyan-bg);
       border-radius: 10px;
-      padding: 0.4rem 0.6rem;
-      margin-bottom: 0.35rem;
+      padding: 0.6rem 0.8rem;
+      margin-bottom: 0.5rem;
       font-weight: 700;
       cursor: default;
       border: 1px solid rgba(11, 99, 183, 0.06);
-      min-height: 36px;
+      min-height: 40px;
       flex-shrink: 0;
     }
 
@@ -671,7 +671,7 @@
     <!-- RANKINGS E TABELA -->
     <section class="dashboard-rankings-row" aria-label="Rankings e tabelas">
       <div id="rankingMelhores" class="dashboard-ranking-container fade-in">
-        <h3><i class="fas fa-trophy"></i> 6 Maiores NPS</h3>
+        <h3><i class="fas fa-trophy"></i> 5 Maiores NPS</h3>
         <ul id="topList" class="dashboard-ranking-list"></ul>
       </div>
 
@@ -727,7 +727,7 @@
       </div>
 
       <div id="rankingPiores" class="dashboard-ranking-container fade-in">
-        <h3><i class="fas fa-exclamation-triangle"></i> 6 Menores NPS</h3>
+        <h3><i class="fas fa-exclamation-triangle"></i> 5 Menores NPS</h3>
         <ul id="bottomList" class="dashboard-ranking-list"></ul>
       </div>
     </section>
@@ -959,15 +959,15 @@
       const companyArr = Object.keys(companyMap).map(k => ({ empresa: k, avg: companyMap[k].count ? (companyMap[k].sum / companyMap[k].count) : null, count: companyMap[k].rows.length })).filter(x => x.avg !== null);
       const sortedDesc = companyArr.slice().sort((a, b) => b.avg - a.avg);
       const sortedAsc = companyArr.slice().sort((a, b) => a.avg - b.avg);
-      const top6 = sortedDesc.slice(0, 6), bottom6 = sortedAsc.slice(0, 6);
+      const top5 = sortedDesc.slice(0, 5), bottom5 = sortedAsc.slice(0, 5);
       const topListDiv = document.getElementById('topList'), bottomListDiv = document.getElementById('bottomList');
       topListDiv.innerHTML = ''; bottomListDiv.innerHTML = '';
-      top6.forEach((c, i) => {
+      top5.forEach((c, i) => {
         const li = document.createElement('li');
         li.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div class="rank">${i + 1}</div><div style="text-align:left;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${escapeHtml(c.empresa)}</div></div><div style="background:linear-gradient(90deg, var(--tryvia-blue), var(--tryvia-cyan));color:#fff;padding:.25em .6em;border-radius:8px">${Math.round(c.avg)}</div>`;
         topListDiv.appendChild(li);
       });
-      bottom6.forEach((c, i) => {
+      bottom5.forEach((c, i) => {
         const li = document.createElement('li');
         li.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div class="rank">${i + 1}</div><div style="text-align:left;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${escapeHtml(c.empresa)}</div></div><div style="background:linear-gradient(90deg, var(--tryvia-red), #ff7b7b);color:#fff;padding:.25em .6em;border-radius:8px">${Math.round(c.avg)}</div>`;
         bottomListDiv.appendChild(li);
