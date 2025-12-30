@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
@@ -98,8 +98,8 @@
     .dashboard-rankings-row{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:12px 0;}
     .dashboard-ranking-container{ background:linear-gradient(135deg, #e5fbff 0%, #f0fdff 100%); border-radius:14px; box-shadow:var(--tryvia-card-shadow); border:1px solid var(--tryvia-cyan); padding:12px; display:flex; flex-direction:column; height:420px; box-sizing:border-box; }
     .dashboard-ranking-container{ background:var(--tryvia-cyan-bg); }
-    .dashboard-ranking-container h3{color:var(--tryvia-dark);font-weight:700;font-size:16px;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.4px;text-align:center;}
-    .dashboard-ranking-list{ width:100%; list-style:none; margin:0; padding:0; overflow:auto; }
+    .dashboard-ranking-container h3{color:var(--tryvia-dark);font-weight:700;font-size:16px;margin:0 0 16px 0;text-transform:uppercase;letter-spacing:0.4px;text-align:center;}
+    .dashboard-ranking-list{ width:100%; list-style:none; margin:8px 0 0 0; padding:4px 0 0 0; overflow:auto; }
     .dashboard-ranking-list li{ display:flex; align-items:center; justify-content:space-between; background:var(--tryvia-cyan-bg); border-radius:10px; padding:.5rem .65rem; margin-bottom:.6rem; font-weight:700; cursor:default; border:1px solid rgba(11,99,183,0.06); }
     .dashboard-ranking-list .rank{ background:var(--tryvia-white); color:var(--tryvia-cyan); border-radius:50px; padding:.3rem .6rem; border:1px solid rgba(11,99,183,0.06); font-weight:800; min-width:36px; text-align:center; }
 
@@ -370,8 +370,8 @@
           }
         }
         return {
-          raw:r, date:dateObj, dateRaw:r[colData]||'', empresa:r[colEmpresa]||'', nome:r[colNome]||'', status:r[colStatus]||'',
-          notaRaw, notaNum, category:cat
+          raw:r, date:dateObj, dateRaw:r[colData]||'', empresa:fixMojibake(r[colEmpresa]||''), nome:fixMojibake(r[colNome]||''), status:fixMojibake(r[colStatus]||''),
+          notaRaw:fixMojibake(notaRaw), notaNum, category:cat
         };
       });
 
@@ -563,6 +563,13 @@
     } // buildFromRows
 
     function escapeHtml(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function fixMojibake(s){
+      s = (s==null ? '' : s.toString());
+      if(/[ÃÂ�]/.test(s)){
+        try{ return decodeURIComponent(escape(s)); }catch(e){}
+      }
+      return s;
+    }
 
     // interactions - botões removidos, dados carregam automaticamente
 
@@ -758,7 +765,7 @@
   color: var(--tryvia-dark);
   font-weight: 800;
   font-size: 13px;
-  margin: 0 0 16px 0;
+  margin: 0 0 24px 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-align: center;
