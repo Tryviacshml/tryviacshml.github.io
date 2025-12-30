@@ -1,0 +1,806 @@
+﻿<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard NPS — Tryvia</title>
+
+  <!-- Fonts (CHS) -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- PapaParse -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- Font Awesome para ícones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Animações -->
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(-100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .fade-in { animation: fadeIn 0.6s ease-out; }
+    .pulse { animation: pulse 2s infinite; }
+    .slide-in { animation: slideIn 0.8s ease-out; }
+  </style>
+
+  <style>
+    /* design tokens (from your CHS) + full-width tweak */
+    :root{
+      --tryvia-dark:#3a383b; --tryvia-dark2:#2a2829; --tryvia-white:#fff;
+      --tryvia-gray:#f8f9fa; --tryvia-gray2:#e9ecef; --tryvia-border:#e0e6ed;
+      --tryvia-cyan:#00d4ff; --tryvia-green:#00d084; --tryvia-yellow:#ffc107;
+      --tryvia-red:#ff4757; --tryvia-blue:#0066ff;
+      --tryvia-shadow:0 12px 40px rgba(0,0,0,0.08); --tryvia-card-shadow:0 8px 32px rgba(0,212,255,0.12);
+      --tryvia-cyan-bg:linear-gradient(135deg, rgba(0,212,255,0.04) 0%, rgba(0,212,255,0.01) 100%);
+      --tryvia-gradient:linear-gradient(135deg,#f0f4ff 0%,#e8f4fc 25%,#f5f0ff 50%,#e8fcf8 75%,#f0f4ff 100%);
+      --tryvia-accent-gradient:linear-gradient(135deg,#00d4ff 0%,#00b8d4 50%,#00e4ff 100%);
+      --tryvia-glass:rgba(255,255,255,0.92); --tryvia-glass-border:rgba(255,255,255,0.4);
+    }
+
+    html,body{
+      background:var(--tryvia-gradient);
+      background-attachment: fixed;
+      font-family:'Roboto',Arial,sans-serif!important;
+      margin:0;padding:0;box-sizing:border-box;color:var(--tryvia-dark);
+      width:100vw; overflow-x:hidden;
+    }
+    body{ display:flex;flex-direction:column;align-items:center;padding-top:6px; }
+
+    /* Header */
+    header{ width:100vw; padding:0.35rem 1rem; position:relative; background:rgba(255,255,255,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-bottom:1px solid rgba(0,212,255,0.1); }
+    .header-inner{ width:100%; max-width:100% !important; margin:0 auto; display:flex; align-items:center; gap:1rem; justify-content:center; position:relative; min-height:64px; padding:0 28px; }
+    .header-inner .left{ position:absolute; left:20px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:8px; }
+    .logo-wrap{ width:auto; height:auto; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; background:#fff; border:1px solid var(--tryvia-border); padding:4px; }
+    .logo { max-height:48px; width:auto; display:block; vertical-align:middle; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.08)); }
+    #siteTitle{ font-family:'Poppins', 'Roboto', Arial, sans-serif; font-weight:700; font-size:42px; color:var(--tryvia-dark); letter-spacing:0.2px; margin:0 0 6px 0; text-align:center; line-height:1; }
+    #siteSubtitle{ font-family:'Poppins', 'Roboto', Arial, sans-serif; font-weight:700; font-size:15px; color:var(--tryvia-cyan); margin:0; text-transform:uppercase; }
+
+    .right{ position:absolute; right:20px; top:50%; transform:translateY(-50%); display:flex; gap:8px; align-items:center; }
+
+    /* CONTAINER (full-width centralizado) */
+    .container{
+      width:100%; max-width:100% !important; margin:10px auto 40px; background:var(--tryvia-glass); border-radius:18px; box-shadow:var(--tryvia-shadow); padding:20px 40px; display:flex; flex-direction:column; align-items:stretch; box-sizing:border-box;
+    }
+
+    /* summary boxes (KPI) - ajustado para 8 cards em linha */
+    .summary-wrapper { width:100%; margin:0 0 12px 0; display:block; }
+    .summary { display:grid; grid-template-columns: repeat(8, 1fr); gap:8px; align-items:stretch; }
+    .summary .box, .summary .details-nps-card { background:var(--tryvia-white); border-radius:8px; padding:8px 4px; font-size:11px; text-align:center; border:1px solid var(--tryvia-border); box-shadow:var(--tryvia-card-shadow); font-weight:700; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:65px; }
+    .kpi-label{ font-weight:700; color:var(--tryvia-dark2); font-size:11px; margin-bottom:3px; line-height:1.2; }
+    .kpi-value{ font-weight:900; font-size:18px; color:var(--tryvia-dark); margin:0; }
+
+    .box.saude{ color:var(--tryvia-green); background:#e7faee; border-color:var(--tryvia-green); }
+    .box.atencao{ color:var(--tryvia-yellow); background:#fffbe7; border-color:var(--tryvia-yellow); }
+    .box.critico{ color:var(--tryvia-red); background:#ffeaea; border-color:var(--tryvia-red); }
+    .box.geral{ background:linear-gradient(135deg,#e7faee 0%, #d4f4dd 100%); color:var(--tryvia-green); border-color:var(--tryvia-green); }
+
+    /* charts row */
+    .dashboard-charts-row{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:12px 0;}
+    .dashboard-chart-container{ background:var(--tryvia-cyan-bg); border-radius:14px; box-shadow:var(--tryvia-card-shadow); border:1px solid var(--tryvia-cyan); padding:12px; height:420px; display:flex; flex-direction:column; align-items:stretch; box-sizing:border-box; position:relative;}
+    .dashboard-chart-container h3{color:var(--tryvia-dark);font-weight:700;font-size:16px;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.4px;text-align:center;}
+    .chart-wrapper{ flex:1; display:flex; align-items:center; justify-content:center; position:relative; padding:6px; min-height:0; }
+    .chart-wrapper canvas{ width:100% !important; height:100% !important; max-width:100% !important; max-height:100% !important; }
+
+    /* rankings */
+    .dashboard-rankings-row{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:12px 0;}
+    .dashboard-ranking-container{ background:linear-gradient(135deg, #e5fbff 0%, #f0fdff 100%); border-radius:14px; box-shadow:var(--tryvia-card-shadow); border:1px solid var(--tryvia-cyan); padding:12px; display:flex; flex-direction:column; height:420px; box-sizing:border-box; }
+    .dashboard-ranking-container{ background:var(--tryvia-cyan-bg); }
+    .dashboard-ranking-container h3{color:var(--tryvia-dark);font-weight:700;font-size:16px;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.4px;text-align:center;}
+    .dashboard-ranking-list{ width:100%; list-style:none; margin:0; padding:0; overflow:auto; }
+    .dashboard-ranking-list li{ display:flex; align-items:center; justify-content:space-between; background:var(--tryvia-cyan-bg); border-radius:10px; padding:.5rem .65rem; margin-bottom:.6rem; font-weight:700; cursor:default; border:1px solid rgba(11,99,183,0.06); }
+    .dashboard-ranking-list .rank{ background:var(--tryvia-white); color:var(--tryvia-cyan); border-radius:50px; padding:.3rem .6rem; border:1px solid rgba(11,99,183,0.06); font-weight:800; min-width:36px; text-align:center; }
+
+    /* table */
+    .table-region{ width:100%; margin-top:8px; overflow:auto; }
+    table{ width:100%; border-collapse:collapse; background:transparent; }
+    thead th{ font-weight:800; text-align:left; padding:8px; color:var(--tryvia-dark2); font-size:13px; position:sticky; top:0; background:var(--tryvia-cyan-bg); }
+    tbody td{ padding:10px; border-top:1px solid rgba(0,0,0,0.04); font-size:13px; color:var(--tryvia-dark2); }
+
+    /* cards detalhes NPS */
+    .details-nps-row{ width:100%; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin:12px 0; }
+    .details-nps-card{ background:var(--tryvia-white); border-radius:10px; padding:10px 6px; text-align:center; border:1px solid var(--tryvia-border); box-shadow:var(--tryvia-card-shadow); font-weight:700; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:70px; }
+    .summary .details-nps-card.promoters-card { color:var(--tryvia-green); background:#e7faee; border-color:var(--tryvia-green); }
+    .summary .details-nps-card.neutrals-card { color:var(--tryvia-yellow); background:#fffbe7; border-color:var(--tryvia-yellow); }
+    .summary .details-nps-card.detractors-card { color:var(--tryvia-red); background:#ffeaea; border-color:var(--tryvia-red); }
+
+    /* badges de notas */
+    .nota-badge{ padding:4px 8px; border-radius:12px; font-size:11px; font-weight:700; display:inline-block; min-width:24px; text-align:center; }
+    .nota-badge.promoter-nota{ background:#e7faee; color:var(--tryvia-green); border:1px solid var(--tryvia-green); }
+    .nota-badge.neutral-nota{ background:#fffbe7; color:var(--tryvia-yellow); border:1px solid var(--tryvia-yellow); }
+    .nota-badge.detractor-nota{ background:#ffeaea; color:var(--tryvia-red); border:1px solid var(--tryvia-red); }
+
+    /* efeitos hover */
+    .summary .box:hover, .summary .details-nps-card:hover, .dashboard-chart-container:hover, .dashboard-ranking-container:hover {
+      transform: translateY(-5px);
+      box-shadow:0 8px 25px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+    }
+    
+    .dashboard-ranking-list li:hover {
+      box-shadow:0 4px 15px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
+    
+    .nota-badge:hover {
+      transform: scale(1.1);
+      transition: all 0.2s ease;
+    }
+
+    /* buttons */
+    .btn{ font-family:inherit; font-weight:700; border-radius:8px; padding:.45rem .8rem; background:var(--tryvia-white); color:var(--tryvia-dark); box-shadow:var(--tryvia-card-shadow); border:1px solid rgba(0,0,0,0.06); cursor:pointer; transition: all 0.2s ease; }
+    .btn:hover{ transform: translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+    .btn-primary{ background:var(--tryvia-green); color:#fff; border:1px solid rgba(0,0,0,0.05); }
+
+    /* responsive */
+    @media (max-width:1100px){
+      .summary { grid-template-columns: repeat(2, 1fr); }
+      .dashboard-charts-row, .dashboard-rankings-row { grid-template-columns: 1fr; }
+      .bottom-row { grid-template-columns: 1fr; }
+      #siteTitle{ font-size:20px; }
+      #siteSubtitle{ font-size:11px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner" role="banner">
+      <div class="left">
+        <div class="logo-wrap" aria-hidden="true">
+          <img class="logo" src="https://tryvia.github.io/dev/logo1.png" alt="Logo">
+        </div>
+      </div>
+
+      <div class="title-wrapper" style="text-align:center">
+        <div id="siteTitle">Net Promoter Score</div>
+        <div id="siteSubtitle">MÉTRICA DE SATISFAÇÃO DO CLIENTE</div>
+      </div>
+
+      <div class="right">
+        <button class="btn" id="themeToggleBtn" type="button" title="Alternar tema">🌙</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" role="main">
+    <!-- KPIs -->
+    <div class="summary-wrapper">
+      <div class="summary" role="list">
+        <div id="totalCard" class="box small-box fade-in">
+          <div class="kpi-label"><i class="fas fa-chart-line"></i> Total de Respostas</div>
+          <div id="totalResponses" class="kpi-value">—</div>
+        </div>
+
+        <div id="npsCard" class="box small-box geral pulse">
+          <div class="kpi-label"><i class="fas fa-star"></i> NPS Atual</div>
+          <div id="npsValue" class="kpi-value">—</div>
+        </div>
+
+        <div id="promCard" class="box small-box saude fade-in">
+          <div class="kpi-label"><i class="fas fa-smile"></i> % Promotores</div>
+          <div id="pctPromoters" class="kpi-value">—</div>
+        </div>
+
+        <div id="neuCard" class="box small-box atencao fade-in">
+          <div class="kpi-label"><i class="fas fa-meh"></i> % Neutros</div>
+          <div id="pctNeutrals" class="kpi-value">—</div>
+        </div>
+
+        <div id="detCard" class="box small-box critico fade-in">
+          <div class="kpi-label"><i class="fas fa-frown"></i> % Detratores</div>
+          <div id="pctDetractors" class="kpi-value">—</div>
+        </div>
+
+        <div class="details-nps-card promoters-card fade-in">
+          <div class="kpi-label"><i class="fas fa-thumbs-up"></i> Qntd Promotores</div>
+          <div id="promotersDetail" class="kpi-value">—</div>
+        </div>
+        
+        <div class="details-nps-card neutrals-card fade-in">
+          <div class="kpi-label"><i class="fas fa-minus-circle"></i> Qntd Neutros</div>
+          <div id="neutralsDetail" class="kpi-value">—</div>
+        </div>
+        
+        <div class="details-nps-card detractors-card fade-in">
+          <div class="kpi-label"><i class="fas fa-thumbs-down"></i> Qntd Detratores</div>
+          <div id="detractorsDetail" class="kpi-value">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRÁFICOS -->
+    <section class="dashboard-charts-row" aria-label="Principais gráficos">
+      <div class="dashboard-chart-container fade-in">
+        <h3><i class="fas fa-chart-pie"></i> Distribuição Promotores / Neutros / Detratores</h3>
+        <div class="chart-wrapper">
+          <canvas id="donutChart" aria-label="Distribuição NPS" role="img"></canvas>
+        </div>
+      </div>
+
+      <div class="dashboard-chart-container fade-in">
+        <h3><i class="fas fa-chart-line"></i> Evolução mensal do NPS</h3>
+        <div class="chart-wrapper">
+          <canvas id="lineNps" aria-label="Evolução NPS" role="img"></canvas>
+        </div>
+      </div>
+
+      <div class="dashboard-chart-container fade-in">
+        <h3><i class="fas fa-chart-bar"></i> Respostas por mês</h3>
+        <div class="chart-wrapper">
+          <canvas id="lineCount" aria-label="Contagem respostas" role="img"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- RANKINGS E TABELA -->
+    <section class="dashboard-rankings-row" aria-label="Rankings e tabelas">
+      <div id="rankingMelhores" class="dashboard-ranking-container fade-in">
+        <h3><i class="fas fa-trophy"></i> 6 Maiores NPS</h3>
+        <ul id="topList" class="dashboard-ranking-list"></ul>
+      </div>
+
+      <div id="responsesBox" class="dashboard-ranking-container fade-in">
+        <h3><i class="fas fa-clock"></i> Respostas recentes</h3>
+        
+        <!-- Filtros separados -->
+        <div style="background: var(--tryvia-cyan-bg); border-radius: 10px; padding: 12px; margin-bottom: 15px; border: 1px solid rgba(11,99,183,0.06);">
+          <div style="display: flex; gap: 12px; align-items: flex-end;">
+            <div style="flex: 1;">
+              <label style="font-size: 12px; font-weight: 600; color: var(--tryvia-dark2); display: block; margin-bottom: 6px;">
+                <i class="fas fa-calendar"></i> Mês
+              </label>
+              <select id="monthFilter" onchange="applyFilters()" style="width: 100%; padding: 6px 8px; border: 1px solid var(--tryvia-border); border-radius: 6px; font-size: 12px; background: var(--tryvia-white); font-weight: 500; height: 32px; box-shadow: var(--tryvia-card-shadow);">
+                <option value="">Todos os meses</option>
+              </select>
+            </div>
+            <div style="flex: 1;">
+              <label style="font-size: 12px; font-weight: 600; color: var(--tryvia-dark2); display: block; margin-bottom: 6px;">
+                <i class="fas fa-tag"></i> Status
+              </label>
+              <select id="statusFilter" onchange="applyFilters()" style="width: 100%; padding: 6px 8px; border: 1px solid var(--tryvia-border); border-radius: 6px; font-size: 12px; background: var(--tryvia-white); font-weight: 500; height: 32px; box-shadow: var(--tryvia-card-shadow);">
+                <option value="">Todos os status</option>
+              </select>
+            </div>
+            <div>
+              <button onclick="clearFilters()" class="btn" style="font-size: 11px; padding: 6px 12px; height: 32px;">
+                <i class="fas fa-times"></i> Limpar
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="table-region" style="margin-top:8px;">
+          <table id="responsesTable" aria-label="Tabela de respostas">
+            <thead><tr><th><i class="fas fa-calendar"></i> Data</th><th><i class="fas fa-building"></i> Empresa</th><th><i class="fas fa-user"></i> Nome</th><th><i class="fas fa-tag"></i> Status</th><th><i class="fas fa-star"></i> Nota</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="rankingPiores" class="dashboard-ranking-container fade-in">
+        <h3><i class="fas fa-exclamation-triangle"></i> 6 Menores NPS</h3>
+        <ul id="bottomList" class="dashboard-ranking-list"></ul>
+      </div>
+    </section>
+
+    
+  </main>
+
+  <!-- SCRIPT: fetch, parse, calcular, desenhar charts -->
+  <script>
+    const csvPubBase = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSaZkrxWyW4SYH26EK2J5Qpi_o_8wa2kHBtt_LBFjU3vN5S-hqX1y0phdQDu_50nHMvFcJDZsJk3H9b/pub?output=csv";
+
+    let donutChart = null, lineNpsChart = null, lineCountChart = null;
+
+    function scoreFromNota(str){
+      if(!str) return null;
+      const nums = (str + '').match(/[\d]+(?:[\.,][\d]+)?/g);
+      if(!nums) return null;
+      const asNum = nums.map(n => parseFloat(n.replace(',', '.')));
+      const avg = asNum.reduce((a,b)=>a+b,0)/asNum.length;
+      return avg;
+    }
+    function categoryFromScore(num){
+      if(num === null || isNaN(num)) return 'unknown';
+      if(num >= 9) return 'promoter';
+      if(num >=7 && num <9) return 'neutral';
+      return 'detractor';
+    }
+
+    async function fetchAndBuild(){
+      try{
+        document.getElementById('totalResponses').innerText = '...';
+        const res = await fetch(csvPubBase);
+        if(!res.ok) throw new Error('Erro ao buscar planilha (status ' + res.status + ')');
+        const buf = await res.arrayBuffer();
+      let csvText = new TextDecoder('utf-8').decode(buf);
+      if (/Ã.|�/.test(csvText)) { try { csvText = new TextDecoder('windows-1252').decode(buf); } catch (e) {} }
+        window._csvText = csvText;
+        Papa.parse(csvText, {
+          header:true, skipEmptyLines:true,
+          complete: function(results){ buildFromRows(results.data); },
+          error: function(err){ console.error(err); alert('Erro ao parsear CSV: ' + err.message); }
+        });
+      }catch(e){
+        console.error(e); alert('Erro: '+ e.message);
+      }
+    }
+
+    function buildFromRows(rows){
+      const headers = rows.length ? Object.keys(rows[0]) : [];
+      const colNota = headers.find(h=>/nota|notas|score/i.test(h)) || headers[4] || 'Notas';
+      const colData = headers.find(h=>/data/i.test(h)) || headers[0];
+      const colEmpresa = headers.find(h=>/empres/i.test(h)) || headers[1] || 'Empresa';
+      const colNome = headers.find(h=>/nome/i.test(h)) || headers[2] || 'Nome';
+      const colStatus = headers.find(h=>/status/i.test(h)) || headers[3] || 'Status';
+
+      const parsed = rows.map(r=>{
+        const notaRaw = (r[colNota]||'').toString().trim();
+        let notaNum = scoreFromNota(notaRaw);
+        if(notaNum === null){
+          const s = (notaRaw||'').replace(',','.');
+          const n = parseFloat(s);
+          if(!isNaN(n)) notaNum = n;
+        }
+        const cat = (notaNum===null) ? 'unknown' : categoryFromScore(notaNum);
+        let dateObj = null;
+        if(r[colData]){
+          const dstr = (r[colData]||'').toString().trim();
+          // Tentar parse DD/MM/YYYY primeiro (formato brasileiro)
+          const m = dstr.match(/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/);
+          if(m){ 
+            const dd=m[1], mm=m[2], yyyy=m[3]; 
+            dateObj = new Date(`${yyyy}-${mm}-${dd}T00:00:00`); 
+          } else {
+            // Se não for DD/MM/YYYY, tentar parse automático
+            const tryDate = new Date(dstr);
+            if(!isNaN(tryDate)) dateObj = tryDate;
+          }
+        }
+        return {
+          raw:r, date:dateObj, dateRaw:r[colData]||'', empresa:r[colEmpresa]||'', nome:r[colNome]||'', status:r[colStatus]||'',
+          notaRaw, notaNum, category:cat
+        };
+      });
+
+      // counts - usar apenas respostas com nota válida
+      const validResponses = parsed.filter(p=>p.notaRaw && p.notaRaw!=='' && p.notaNum !== null && !isNaN(p.notaNum));
+      const total = validResponses.length;
+      const promoters = validResponses.filter(p=>p.category==='promoter').length;
+      const neutrals = validResponses.filter(p=>p.category==='neutral').length;
+      const detractors = validResponses.filter(p=>p.category==='detractor').length;
+      const nps = total === 0 ? 0 : Math.round((((promoters/total) - (detractors/total)) * 100 + 100) / 2);
+      
+      // Debug - log detalhado no console
+      console.group('=== DEBUG NPS ===');
+      console.log('Total de linhas processadas:', parsed.length);
+      console.log('Respostas válidas (com nota numérica):', total);
+      console.log('Promotores (9-10):', promoters);
+      console.log('Neutros (7-8):', neutrals);
+      console.log('Detratores (0-6):', detractors);
+      console.log('Fórmula: (((', promoters, '/', total, ') - (', detractors, '/', total, ')) * 100 + 100) / 2 =', nps);
+      console.log('Respostas válidas detalhadas:', validResponses.map(r => ({ 
+        empresa: r.empresa, 
+        nome: r.nome, 
+        notaRaw: r.notaRaw, 
+        notaNum: r.notaNum, 
+        category: r.category 
+      })));
+      console.groupEnd();
+
+      // update UI
+      document.getElementById('totalResponses').innerText = total;
+      document.getElementById('npsValue').innerText = (nps>0? '+'+nps : nps);
+      document.getElementById('pctPromoters').innerText = total ? ((promoters/total*100).toFixed(0) + '%') : '—';
+      document.getElementById('pctNeutrals').innerText = total ? ((neutrals/total*100).toFixed(0) + '%') : '—';
+      document.getElementById('pctDetractors').innerText = total ? ((detractors/total*100).toFixed(0) + '%') : '—';
+      document.getElementById('promotersDetail').innerText = promoters;
+      document.getElementById('neutralsDetail').innerText = neutrals;
+      document.getElementById('detractorsDetail').innerText = detractors;
+
+      // Donut
+      const donutCtx = document.getElementById('donutChart').getContext('2d');
+      const donutData = {
+        labels:['Promotores','Neutros','Detratores'],
+        datasets:[{
+          data:[promoters,neutrals,detractors],
+          backgroundColor:[getComputedStyle(document.documentElement).getPropertyValue('--tryvia-green')||'#2ecc71', getComputedStyle(document.documentElement).getPropertyValue('--tryvia-yellow')||'#f1c40f', getComputedStyle(document.documentElement).getPropertyValue('--tryvia-red')||'#e74c3c']
+        }]
+      };
+      if(donutChart) donutChart.destroy();
+      donutChart = new Chart(donutCtx, { 
+        type:'doughnut', 
+        data:donutData, 
+        options:{ 
+          responsive:true, 
+          maintainAspectRatio:false,
+          cutout:'65%', 
+          plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, padding:10, font:{ size:11 } } } },
+          layout:{ padding:{ top:5, bottom:5, left:5, right:5 } }
+        } 
+      });
+
+      // Monthly aggregations
+      const monthMap = {};
+      parsed.forEach(p=>{
+        const key = p.date ? `${p.date.getFullYear()}-${String(p.date.getMonth()+1).padStart(2,'0')}` : 'Sem data';
+        if(!monthMap[key]) monthMap[key] = {count:0,promoters:0,neutrals:0,detractors:0,sumScore:0};
+        if(p.notaRaw && p.notaRaw!==''){
+          monthMap[key].count++;
+          if(p.category==='promoter') monthMap[key].promoters++;
+          if(p.category==='neutral') monthMap[key].neutrals++;
+          if(p.category==='detractor') monthMap[key].detractors++;
+          if(p.notaNum) monthMap[key].sumScore += p.notaNum;
+        }
+      });
+
+      const monthKeys = Object.keys(monthMap).filter(k=>k!=='Sem data').sort();
+      if(monthMap['Sem data']) monthKeys.push('Sem data');
+
+      const labelsByMonth = monthKeys.map(k=>{
+        if(k==='Sem data') return 'Sem data';
+        const [y,m]=k.split('-'); const date=new Date(y,parseInt(m)-1,1);
+        return date.toLocaleString('pt-BR',{month:'short',year:'2-digit'});
+      });
+
+      const npsByMonth = monthKeys.map(k=>{
+        const m = monthMap[k];
+        if(!m.count) return 0;
+        return Math.round((((m.promoters/m.count) - (m.detractors/m.count)) * 100 + 100) / 2 * 10)/10;
+      });
+
+      // Calcular média móvel de 6 meses para NPS
+      const npsMovingAverage = monthKeys.map((k, index) => {
+        let totalPromoters = 0, totalDetractors = 0, totalResponses = 0;
+        
+        // Pegar dados dos últimos 6 meses (incluindo o mês atual)
+        for (let i = Math.max(0, index - 5); i <= index; i++) {
+          const monthKey = monthKeys[i];
+          const monthData = monthMap[monthKey];
+          if (monthData && monthData.count > 0) {
+            totalPromoters += monthData.promoters;
+            totalDetractors += monthData.detractors;
+            totalResponses += monthData.count;
+          }
+        }
+        
+        if (totalResponses === 0) return 0;
+        return Math.round((((totalPromoters/totalResponses) - (totalDetractors/totalResponses)) * 100 + 100) / 2 * 10)/10;
+      });
+      const countsByMonth = monthKeys.map(k=>monthMap[k].count);
+
+      // Line NPS
+      const lineCtx = document.getElementById('lineNps').getContext('2d');
+      if(lineNpsChart) lineNpsChart.destroy();
+      lineNpsChart = new Chart(lineCtx, {
+        type:'line',
+        data:{ labels: labelsByMonth, datasets:[
+          { label:'NPS Média 6 Meses', data:npsMovingAverage, borderColor:getComputedStyle(document.documentElement).getPropertyValue('--tryvia-cyan')||'#00d4ff', backgroundColor:'rgba(0,207,255,0.12)', tension:0.3, pointRadius:4, borderWidth:3 }
+        ]},
+        options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ suggestedMin:-100, suggestedMax:100 } }, plugins:{ legend:{ display:false } } }
+      });
+
+      // Bar counts
+      const barCtx = document.getElementById('lineCount').getContext('2d');
+      if(lineCountChart) lineCountChart.destroy();
+      lineCountChart = new Chart(barCtx, { type:'bar', data:{ labels:labelsByMonth, datasets:[{ label:'Respostas', data:countsByMonth, borderRadius:6, backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--tryvia-cyan')||'#00cfff' }]}, options:{ plugins:{ legend:{ display:false } }, maintainAspectRatio:false } });
+
+      // Rankings
+      const companyMap = {};
+      parsed.forEach(p=>{
+        const nm = (p.empresa||'Sem Empresa').toString().trim() || 'Sem Empresa';
+        if(!companyMap[nm]) companyMap[nm] = {sum:0,count:0,rows:[]};
+        if(p.notaNum){ companyMap[nm].sum += p.notaNum; companyMap[nm].count++; }
+        companyMap[nm].rows.push(p);
+      });
+      const companyArr = Object.keys(companyMap).map(k=>({ empresa:k, avg: companyMap[k].count ? (companyMap[k].sum/companyMap[k].count) : null, count: companyMap[k].rows.length })).filter(x=>x.avg !== null);
+      const sortedDesc = companyArr.slice().sort((a,b)=>b.avg - a.avg);
+      const sortedAsc = companyArr.slice().sort((a,b)=>a.avg - b.avg);
+      const top6 = sortedDesc.slice(0,6), bottom6 = sortedAsc.slice(0,6);
+      const topListDiv = document.getElementById('topList'), bottomListDiv = document.getElementById('bottomList');
+      topListDiv.innerHTML=''; bottomListDiv.innerHTML='';
+      top6.forEach((c,i)=>{
+        const li = document.createElement('li');
+        li.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div class="rank">${i+1}</div><div style="text-align:left;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${escapeHtml(c.empresa)}</div></div><div style="background:linear-gradient(90deg, var(--tryvia-blue), var(--tryvia-cyan));color:#fff;padding:.25em .6em;border-radius:8px">${Math.round(c.avg)}</div>`;
+        topListDiv.appendChild(li);
+      });
+      bottom6.forEach((c,i)=>{
+        const li = document.createElement('li');
+        li.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div class="rank">${i+1}</div><div style="text-align:left;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${escapeHtml(c.empresa)}</div></div><div style="background:linear-gradient(90deg, var(--tryvia-red), #ff7b7b);color:#fff;padding:.25em .6em;border-radius:8px">${Math.round(c.avg)}</div>`;
+        bottomListDiv.appendChild(li);
+      });
+
+      // Table
+      const tbody = document.querySelector('#responsesTable tbody'); tbody.innerHTML = '';
+      const rowsSorted = parsed.slice().sort((a,b)=>{
+        if(a.date && b.date) return b.date - a.date;
+        if(a.date) return -1;
+        if(b.date) return 1;
+        return 0;
+      }).slice(0,200);
+      rowsSorted.forEach(r=>{
+        const tr = document.createElement('tr');
+        // Extrair apenas o nome do mês
+        let monthName = 'Sem data';
+        if(r.date){
+          monthName = r.date.toLocaleString('pt-BR', { month: 'long' });
+          monthName = monthName.charAt(0).toUpperCase() + monthName.slice(1); // Primeira letra maiúscula
+        }
+        
+        // Adicionar classe de cor baseada na nota
+        let notaClass = '';
+        const notaNum = parseInt(r.notaRaw);
+        if(notaNum >= 9) notaClass = 'promoter-nota';
+        else if(notaNum >= 7) notaClass = 'neutral-nota';
+        else if(notaNum >= 0) notaClass = 'detractor-nota';
+        
+        tr.innerHTML = `
+          <td style="font-weight:600; color:var(--tryvia-dark2);">${escapeHtml(monthName)}</td>
+          <td style="font-weight:500;">${escapeHtml(r.empresa)}</td>
+          <td>${escapeHtml(r.nome)}</td>
+          <td><span style="background:var(--tryvia-cyan-bg); color:var(--tryvia-blue); padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600;">${escapeHtml(r.status)}</span></td>
+          <td><span class="nota-badge ${notaClass}">${escapeHtml(r.notaRaw||'')}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      
+      // Armazenar dados para o filtro e inicializar
+      allData = parsed;
+      populateFilters();
+      updateTable(parsed);
+    } // buildFromRows
+
+    function escapeHtml(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // interactions - botões removidos, dados carregam automaticamente
+
+    document.getElementById('themeToggleBtn').addEventListener('click', function(){
+      document.body.classList.toggle('dark-theme');
+      this.textContent = document.body.classList.contains('dark-theme') ? '☀️' : '🌙';
+    });
+
+    // Funções dos filtros
+    let allData = [];
+    
+    function populateFilters() {
+      // Popular filtro de meses
+      const monthFilter = document.getElementById('monthFilter');
+      const months = [...new Set(allData.map(r => {
+        if (r.date) {
+          return r.date.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+        }
+        return 'Sem data';
+      }))].sort();
+      
+      months.forEach(month => {
+        const option = document.createElement('option');
+        option.value = month;
+        option.textContent = month.charAt(0).toUpperCase() + month.slice(1);
+        monthFilter.appendChild(option);
+      });
+      
+      // Popular filtro de status
+      const statusFilter = document.getElementById('statusFilter');
+      const statuses = [...new Set(allData.map(r => r.status || '').filter(s => s.trim()))].sort();
+      
+      statuses.forEach(status => {
+        const option = document.createElement('option');
+        option.value = status;
+        option.textContent = status;
+        statusFilter.appendChild(option);
+      });
+    }
+    
+    function applyFilters() {
+      const monthFilter = document.getElementById('monthFilter').value;
+      const statusFilter = document.getElementById('statusFilter').value;
+      
+      let filteredData = allData;
+      
+      // Aplicar filtro de mês
+      if (monthFilter) {
+        filteredData = filteredData.filter(r => {
+          if (!r.date) return monthFilter === 'Sem data';
+          const monthYear = r.date.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+          return monthYear === monthFilter;
+        });
+      }
+      
+      // Aplicar filtro de status
+      if (statusFilter) {
+        filteredData = filteredData.filter(r => (r.status || '') === statusFilter);
+      }
+      
+      updateTable(filteredData);
+    }
+    
+    function clearFilters() {
+      document.getElementById('monthFilter').value = '';
+      document.getElementById('statusFilter').value = '';
+      updateTable(allData);
+    }
+    
+    function updateTable(data) {
+      const tbody = document.querySelector('#responsesTable tbody');
+      tbody.innerHTML = '';
+      
+      const rowsSorted = data.slice().sort((a,b)=>{
+        if(a.date && b.date) return b.date - a.date;
+        if(a.date) return -1;
+        if(b.date) return 1;
+        return 0;
+      }).slice(0,200);
+      
+      rowsSorted.forEach(r=>{
+        const tr = document.createElement('tr');
+        // Extrair apenas o nome do mês
+        let monthName = 'Sem data';
+        if(r.date){
+          monthName = r.date.toLocaleString('pt-BR', { month: 'long' });
+          monthName = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+        }
+        
+        // Adicionar classe de cor baseada na nota
+        let notaClass = '';
+        const notaNum = parseInt(r.notaRaw);
+        if(notaNum >= 9) notaClass = 'promoter-nota';
+        else if(notaNum >= 7) notaClass = 'neutral-nota';
+        else if(notaNum >= 0) notaClass = 'detractor-nota';
+        
+        tr.innerHTML = `
+          <td style="font-weight:600; color:var(--tryvia-dark2);">${escapeHtml(monthName)}</td>
+          <td style="font-weight:500;">${escapeHtml(r.empresa)}</td>
+          <td>${escapeHtml(r.nome)}</td>
+          <td><span style="background:var(--tryvia-cyan-bg); color:var(--tryvia-blue); padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600;">${escapeHtml(r.status)}</span></td>
+          <td><span class="nota-badge ${notaClass}">${escapeHtml(r.notaRaw||'')}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      
+      // Mostrar quantidade de resultados
+      const totalResults = rowsSorted.length;
+      if (totalResults === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--tryvia-dark2);">Nenhum resultado encontrado</td></tr>';
+      }
+    }
+
+    // initial load
+    fetchAndBuild();
+    // optional: setInterval(fetchAndBuild, 60000);
+  </script>
+<style id="padrao-visual-overrides">
+/* Summary boxes (visual match) */
+.summary .box {
+  background: linear-gradient(165deg, rgba(255,255,255,.98) 0%, rgba(248,252,255,.95) 50%, rgba(240,250,255,.92) 100%);
+  border-radius: 20px;
+  padding: 16px 12px;
+  border: 1px solid rgba(0, 212, 255, 0.08);
+  box-shadow: 0 4px 6px rgba(0,0,0,.02), 0 8px 24px rgba(0,0,0,.04), inset 0 1px 0 rgba(255,255,255,.9);
+  position: relative;
+  overflow: hidden;
+  transition: all .4s cubic-bezier(0.4,0,0.2,1);
+}
+.summary .box::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background: linear-gradient(90deg, var(--tryvia-cyan) 0%, #00e4ff 100%); opacity:0; transition: opacity .3s ease; }
+.summary .box:hover::before { opacity:1; }
+.box.saude { background: linear-gradient(165deg, #e7faee 0%, #d4f4dd 50%, #c8f0d0 100%); border-color: rgba(0,208,132,.2); }
+.box.atencao { background: linear-gradient(165deg, #fffbe7 0%, #fff3c6 50%, #ffecb3 100%); border-color: rgba(255,193,7,.2); }
+.box.critico { background: linear-gradient(165deg, #ffeaea 0%, #ffd1d1 50%, #ffc4c4 100%); border-color: rgba(255,71,87,.2); }
+
+/* Button visual (match) */
+.btn { font-family: inherit; font-weight: 700; border-radius: 12px; padding: .5rem .9rem; background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%); color: var(--tryvia-dark); box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid rgba(0, 212, 255, 0.15); cursor: pointer; transition: all .2s ease; }
+
+/* Chart containers (gradient border + glass) */
+.dashboard-chart-container {
+  background: linear-gradient(165deg, rgba(255,255,255,.98) 0%, rgba(248,252,255,.95) 50%, rgba(240,250,255,.92) 100%);
+  border-radius: 24px;
+  box-shadow: 0 4px 6px rgba(0,0,0,.02), 0 12px 40px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.9);
+  border: 3px solid transparent;
+  background-image: linear-gradient(165deg, rgba(255,255,255,.98) 0%, rgba(248,252,255,.95) 50%, rgba(240,250,255,.92) 100%), linear-gradient(135deg, #00d4ff 0%, #0066ff 25%, #00e4ff 50%, #0099ff 75%, #00d4ff 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  padding: 20px;
+  position: relative;
+  transition: all .4s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+}
+.dashboard-chart-container::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background: linear-gradient(90deg, var(--tryvia-cyan) 0%, #00e4ff 50%, var(--tryvia-green) 100%); opacity:0; transition: opacity .3s ease; }
+.dashboard-chart-container:hover::before { opacity:1; }
+.dashboard-chart-container:hover { transform: translateY(-6px); box-shadow: 0 8px 16px rgba(0,0,0,.04), 0 24px 60px rgba(0,212,255,.18), inset 0 1px 0 rgba(255,255,255,.9), 0 0 0 2px rgba(0,212,255,.3); border-width:3px; }
+
+/* Chart inner area */
+.chart-wrapper { background: rgba(255,255,255,.5); border-radius: 16px; padding: 8px; margin-top: 4px; }
+
+/* Ranking containers (gradient border + glass) */
+.dashboard-ranking-container {
+  background: linear-gradient(165deg, rgba(255,255,255,.98) 0%, rgba(248,252,255,.95) 50%, rgba(240,250,255,.92) 100%);
+  border-radius: 24px;
+  box-shadow: 0 4px 6px rgba(0,0,0,.02), 0 12px 40px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.9);
+  border: 3px solid transparent;
+  background-image: linear-gradient(165deg, rgba(255,255,255,.98) 0%, rgba(248,252,255,.95) 50%, rgba(240,250,255,.92) 100%), linear-gradient(135deg, #00d4ff 0%, #0066ff 25%, #667eea 50%, #0099ff 75%, #00d4ff 100%);
+  background-origin: border-box; background-clip: padding-box, border-box;
+  padding: 20px; overflow: hidden; position: relative; transition: all .4s cubic-bezier(0.4,0,0.2,1);
+}
+.dashboard-ranking-container::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background: linear-gradient(90deg, var(--tryvia-cyan) 0%, #667eea 50%, #764ba2 100%); opacity:0; transition: opacity .3s ease; }
+.dashboard-ranking-container:hover::before { opacity:1; }
+.dashboard-ranking-container:hover { transform: translateY(-6px); box-shadow: 0 8px 16px rgba(0,0,0,.04), 0 24px 60px rgba(0,212,255,.18), inset 0 1px 0 rgba(255,255,255,.9), 0 0 0 2px rgba(0,212,255,.3); border-width:3px; }
+
+/* Hover buttons (appearance) */
+.chart-toggle-btn, .fullscreen-btn {
+  position: absolute; top: 12px; width: 32px; height: 32px; min-width: 32px; min-height: 32px; border-radius: 10px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 100%);
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 4px 16px rgba(0,212,255,0.08);
+  transition: all .25s ease; z-index:3; font-size:.75rem; padding:0; opacity:0; pointer-events:none;
+}
+.fullscreen-btn { left: 8px; }
+.chart-toggle-btn { left: calc(8px + 32px + 4px); }
+.dashboard-chart-container:hover .chart-toggle-btn,
+.dashboard-chart-container:hover .fullscreen-btn,
+.dashboard-ranking-container:hover .fullscreen-btn { opacity:1; pointer-events:auto; }
+.chart-toggle-btn:hover, .fullscreen-btn:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 8px 24px rgba(0,212,255,0.15); border-color: rgba(0,212,255,0.25); }
+</style>
+<style id="padrao-h3-overrides">
+/* Títulos de gráficos e rankings idênticos ao padrao.html */
+.dashboard-chart-container h3, .dashboard-ranking-container h3 {
+  color: var(--tryvia-dark);
+  font-weight: 800;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+  white-space: normal;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.dashboard-chart-container h3 i {
+  font-size: 1rem;
+  background: linear-gradient(135deg, var(--tryvia-cyan) 0%, #00b8d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.dashboard-ranking-container h3 i {
+  font-size: 1rem;
+  background: linear-gradient(135deg, var(--tryvia-cyan) 0%, #667eea 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+</style>
+<style id="padrao-ranking-h3-position">
+.dashboard-ranking-container h3 {
+  margin: 0;
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+</style>
+<!-- Ecosystem badges injection -->
+<style id="ecos-badges-style">.ecos-nav-badges{display:inline-flex;gap:8px;margin-left:6px}.ecos-badge{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--tryvia-accent-gradient);color:#fff;font-weight:800;font-size:12px;border:1px solid rgba(0,212,255,0.2);box-shadow:var(--tryvia-card-shadow);cursor:pointer;user-select:none}.ecos-badge:hover{transform:translateY(-1px)}</style>
+<script id="ecos-badges-script">(function(){function onClick(e){const a=e.target.closest('.ecos-badge');if(!a)return;const r=a.dataset.route;try{if(window.top&&window.top!==window){window.top.location.hash=(r==='nps')?'#/nps':'#/chs';return;}}catch(_){}var here=(location.pathname||'').replace(/\\\\/g,'/');if(r==='nps'){location.href=here.includes('/nps/')?location.href:'../nps/okokok.html';}else{location.href=here.includes('/chs/')?location.href:'../chs/padrao.html';}}function ensure(){if(document.getElementById('ecos-badges'))return;var left=document.querySelector('.header-inner .left')||document.querySelector('.left');if(!left)return;var nav=document.createElement('nav');nav.id='ecos-badges';nav.className='ecos-nav-badges';nav.innerHTML='<a class="ecos-badge" data-route="chs" title="Customer Health Score">CHS</a><a class="ecos-badge" data-route="nps" title="Net Promoter Score">NPS</a>';nav.addEventListener('click',onClick);left.appendChild(nav);}if(document.readyState!=='loading')ensure();else document.addEventListener('DOMContentLoaded',ensure);})();</script>
+</body>
+</html>
+
+
+
+
+

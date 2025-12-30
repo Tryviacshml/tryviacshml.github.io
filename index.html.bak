@@ -1,0 +1,72 @@
+﻿<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tryvia CS Ecosystem</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles/tokens.css" />
+  <link rel="stylesheet" href="./styles/base.css" />
+  <link rel="stylesheet" href="./styles/layout.css" />
+  <link rel="stylesheet" href="./styles/components.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style id="shell-override">
+  .app-header{ display:none !important; }
+  .app-root{ width:100vw; max-width:100vw; margin:0; padding:0; }
+  .module-frame{ width:100vw !important; height:100vh !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; background:transparent !important; }
+  html, body { margin:0; padding:0; }
+</style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="left">
+        <div class="logo-wrap">
+          <img class="logo" src="https://tryvia.github.io/dev/logo1.png" alt="Tryvia" />
+        </div>
+        <nav class="nav-badges">
+          <a class="app-badge" data-route="chs" href="#/chs" title="Customer Health Score">CHS</a>
+          <a class="app-badge" data-route="nps" href="#/nps" title="Net Promoter Score">NPS</a>
+        </nav>
+      </div>
+      <div class="title-wrapper">
+        <div id="siteTitle">Customer Success Ecosystem</div>
+        <div id="siteSubtitle">Tryvia</div>
+      </div>
+      <div class="right"></div>
+    </div>
+  </header>
+  <main id="app" class="app-root">
+    <!-- Fallback inicial: CHS como pÃ¡gina principal -->
+    <iframe class="module-frame" style="width:100%; height:calc(100vh - 110px);" src="./modules/chs/padrao.html" title="Customer Health Score" loading="eager"></iframe>
+  </main>
+  <script>
+    (function(){
+      const MODULES = {
+        chs: { name:'Customer Health Score', src:'./modules/chs/padrao.html' },
+        nps: { name:'Net Promoter Score', src:'./modules/nps/okokok.html' }
+      };
+      const app = document.getElementById('app');
+      function setActive(route){
+        document.querySelectorAll('.app-badge').forEach(a=>{
+          a.classList.toggle('active', a.dataset.route===route);
+        });
+      }
+      function routeFromHash(){
+        const h=(location.hash||'').toLowerCase();
+        if(h.startsWith('#/nps')) return 'nps';
+        return 'chs';
+      }
+      function render(route){
+        const mod = MODULES[route] || MODULES.chs;
+        app.innerHTML = `<iframe class="module-frame" style="width:100%; height:calc(100vh - 110px);" src="${mod.src}" title="${mod.name}" loading="eager"></iframe>`;
+        setActive(route);
+      }
+      window.addEventListener('hashchange', ()=>render(routeFromHash()));
+      // Render immediately to show default CHS without waiting DOMContentLoaded
+      render(routeFromHash());
+    })();
+  </script>
+</body>
+</html>
+
