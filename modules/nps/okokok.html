@@ -349,7 +349,7 @@
       padding: 12px;
       display: flex;
       flex-direction: column;
-      height: 420px;
+      height: 380px;
       box-sizing: border-box;
     }
 
@@ -372,7 +372,11 @@
       list-style: none;
       margin: 8px 0 0 0;
       padding: 40px 0 0 0;
-      overflow: auto;
+      overflow: visible;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
     }
 
     .dashboard-ranking-list li {
@@ -381,11 +385,13 @@
       justify-content: space-between;
       background: var(--tryvia-cyan-bg);
       border-radius: 10px;
-      padding: .5rem .65rem;
-      margin-bottom: .6rem;
+      padding: 0.4rem 0.6rem;
+      margin-bottom: 0.35rem;
       font-weight: 700;
       cursor: default;
       border: 1px solid rgba(11, 99, 183, 0.06);
+      min-height: 36px;
+      flex-shrink: 0;
     }
 
     .dashboard-ranking-list .rank {
