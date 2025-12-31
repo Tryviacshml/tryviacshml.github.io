@@ -368,83 +368,133 @@
     }
 
     .dashboard-ranking-list {
-      width: 100%;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
       gap: 8px;
+      padding: 0 4px;
+      list-style: none;
+      margin: 0;
+      flex: 1;
+      overflow: hidden;
+      justify-content: flex-start;
     }
 
-    .dashboard-ranking-list li {
+    /* Card Style Ranking Item */
+    .ranking-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--tryvia-cyan-bg);
-      border-radius: 10px;
-      padding: 0.5rem 0.8rem;
+      padding: 8px 12px;
+      border-radius: 12px;
       margin-bottom: 0;
-      font-weight: 700;
-      cursor: default;
-      border: 1px solid rgba(11, 99, 183, 0.06);
-      min-height: 40px;
-      flex-shrink: 0;
+      cursor: pointer;
+      min-height: 44px;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      border: 1px solid transparent;
       position: relative;
-      overflow: hidden;
     }
 
-    .dashboard-ranking-list .rank {
-      background: var(--tryvia-white);
-      color: var(--tryvia-cyan);
-      border-radius: 50px;
-      padding: .3rem .6rem;
-      border: 1px solid rgba(11, 99, 183, 0.06);
+    .ranking-item:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+      z-index: 2;
+    }
+
+    /* Status Colors */
+    .status-promoter {
+      background: linear-gradient(90deg, #e7faee 0%, #d4f4dd 100%);
+      border-color: #c3e6cb;
+    }
+
+    .status-neutral {
+      background: linear-gradient(90deg, #fffbe7 0%, #fff3c6 100%);
+      border-color: #ffeeba;
+    }
+
+    .status-detractor {
+      background: linear-gradient(90deg, #ffeaea 0%, #ffd1d1 100%);
+      border-color: #f5c6cb;
+    }
+
+    /* Rank Circle */
+    .rank-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-weight: 800;
-      min-width: 36px;
-      text-align: center;
-      z-index: 1;
+      font-size: 0.85rem;
+      border: 2px solid #ccc;
+      margin-right: 12px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
-    .dashboard-ranking-list .client {
+    .status-promoter .rank-circle {
+      border-color: #009f42;
+      color: #009f42;
+    }
+
+    .status-neutral .rank-circle {
+      border-color: #ffc900;
+      color: #e6b400;
+    }
+
+    .status-detractor .rank-circle {
+      border-color: #e53935;
+      color: #e53935;
+    }
+
+    /* Client Name */
+    .client-name {
       flex: 1;
-      text-align: left;
-      overflow: hidden;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #333;
       white-space: nowrap;
+      overflow: hidden;
       text-overflow: ellipsis;
-      margin: 0 12px;
-      color: var(--tryvia-dark);
-      font-size: 0.95rem;
-      z-index: 1;
+      text-align: left;
+      margin-right: 12px;
     }
 
-    .dashboard-ranking-list .score {
-      padding: .25em .6em;
+    /* Score Badge */
+    .score-badge {
+      padding: 4px 10px;
       border-radius: 8px;
       font-weight: 800;
-      min-width: 44px;
+      font-size: 0.9rem;
+      color: #fff;
+      min-width: 28px;
       text-align: center;
-      z-index: 1;
-      font-size: 0.95rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
 
+    .status-promoter .score-badge {
+      background: #009f42;
+    }
+
+    .status-neutral .score-badge {
+      background: #ffc900;
+    }
+
+    .status-detractor .score-badge {
+      background: #e53935;
+    }
+
+    /* Cleanup */
     .perf-meter {
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.025);
-      z-index: 0;
-      transition: width 1s ease-out;
-      border-radius: 10px 0 0 10px;
+      display: none;
     }
 
     .dashboard-ranking-list li {
       position: relative;
-      overflow: hidden;
+      overflow: visible;
     }
 
     /* table */
@@ -1004,18 +1054,40 @@
       const top5 = sortedDesc.slice(0, 5), bottom5 = sortedAsc.slice(0, 5);
       const topListDiv = document.getElementById('topList'), bottomListDiv = document.getElementById('bottomList');
       topListDiv.innerHTML = ''; bottomListDiv.innerHTML = '';
+      /* Helper para determinar classe CSS baseada na nota média (0-10) */
+      function getNpsStatusClass(avg) {
+        if (avg >= 9) return 'status-promoter';
+        if (avg >= 7) return 'status-neutral';
+        return 'status-detractor';
+      }
+
       top5.forEach((c, i) => {
         const li = document.createElement('li');
-        const score = Math.round(c.avg);
-        const meter = Math.min(100, Math.max(0, score * 10));
-        li.innerHTML = `<div class="perf-meter" style="width:${meter}%;"></div><span class="rank">${i + 1}</span><span class="client" title="${escapeHtml(c.empresa)}">${escapeHtml(c.empresa)}</span><span class="score" style="background:linear-gradient(90deg, var(--tryvia-blue), var(--tryvia-cyan));color:#fff;">${score}</span>`;
+        const score = Math.round(c.avg * 10) / 10; // 1 casa decimal se precisar, ou round
+        const scoreInt = Math.round(c.avg);
+        const statusClass = getNpsStatusClass(scoreInt);
+
+        li.className = `ranking-item ${statusClass}`;
+        li.innerHTML = `
+          <div class="rank-circle">${i + 1}</div>
+          <div class="client-name" title="${escapeHtml(c.empresa)}">${escapeHtml(c.empresa)}</div>
+          <div class="score-badge">${scoreInt}</div>
+        `;
         topListDiv.appendChild(li);
       });
+
       bottom5.forEach((c, i) => {
         const li = document.createElement('li');
-        const score = Math.round(c.avg);
-        const meter = Math.min(100, Math.max(0, score * 10));
-        li.innerHTML = `<div class="perf-meter" style="width:${meter}%;"></div><span class="rank">${i + 1}</span><span class="client" title="${escapeHtml(c.empresa)}">${escapeHtml(c.empresa)}</span><span class="score" style="background:linear-gradient(90deg, var(--tryvia-red), #ff7b7b);color:#fff;">${score}</span>`;
+        const score = Math.round(c.avg * 10) / 10;
+        const scoreInt = Math.round(c.avg);
+        const statusClass = getNpsStatusClass(scoreInt);
+
+        li.className = `ranking-item ${statusClass}`;
+        li.innerHTML = `
+          <div class="rank-circle">${i + 1}</div>
+          <div class="client-name" title="${escapeHtml(c.empresa)}">${escapeHtml(c.empresa)}</div>
+          <div class="score-badge">${scoreInt}</div>
+        `;
         bottomListDiv.appendChild(li);
       });
 
