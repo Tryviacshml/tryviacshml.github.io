@@ -1,6 +1,39 @@
 # CHS Design System Token Reference
 
-Este documento serve como a fonte de verdade para o Design System do módulo **CHS (Customer Health Score)**, que também é utilizado como base para o módulo NPS. Utilize estas definições para manter a consistência visual em novas implementações.
+Este documento serve como a fonte de verdade para o Design System do módulo **CHS (Customer Health Score)**.
+
+## 0. Como Usar (Quick Start)
+
+Para criar um novo dashboard com este design system, utilize o arquivo CSS centralizado.
+
+### Estrutura Básica
+Crie um arquivo HTML e importe o CSS:
+
+```html
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <!-- Fontes Obrigatórias -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Importar Design System -->
+  <link rel="stylesheet" href="../../css/chs-design-system.css">
+</head>
+<body>
+  <main class="container">
+    <!-- Exemplo Card -->
+    <div class="summary">
+       <div class="box saude">
+          <div class="kpi-label"><i class="fas fa-check grad-icon-success"></i> Exemplo</div>
+          <div class="kpi-value">100</div>
+       </div>
+    </div>
+  </main>
+</body>
+</html>
+```
 
 ## 1. Cores e Variáveis (`:root`)
 
