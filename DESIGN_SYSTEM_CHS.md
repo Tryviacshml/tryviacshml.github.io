@@ -160,4 +160,38 @@ Container principal com efeito vidro fosco (backdrop-filter).
 - **Summary Row**: `display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;`
 
 ---
-*Documento gerado automaticamente com base na análise do arquivo `modules/chs/padrao.html`.*
+
+## 6. Componentes Avançados (Interatividade)
+
+### Inputs de Busca (`.search-input`)
+Inputs estilizados com sombra e foco ciano.
+```html
+<input type="text" class="search-input" placeholder="Buscar cliente...">
+```
+
+### Lista de Sugestões (`.suggestions`)
+Dropdown para autocomplete, usado em buscas.
+```html
+<div class="suggestions show">
+  <div class="suggestion-item">
+     <div class="suggestion-name">Cliente ABC</div>
+     <div class="suggestion-chs">95</div>
+  </div>
+</div>
+```
+
+### Modais e Overlays (`.modal-overlay`)
+Sistema de janelas modais com animação de entrada e fundo desfocado.
+Estrutura recomendada:
+```html
+<div class="modal-overlay show" id="myModal">
+  <div class="modal-box">
+     <button class="close-btn">&times;</button>
+     <h3>Título do Modal</h3>
+     <p>Conteúdo aqui...</p>
+  </div>
+</div>
+```
+
+---
+*Documento v1.1 - Gerado automaticamente com base na análise completa do arquivo `modules/chs/padrao.html`.*
