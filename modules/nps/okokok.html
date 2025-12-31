@@ -606,7 +606,32 @@
       border: 1px solid var(--tryvia-red);
     }
 
-    /* efeitos hover */
+    /* Gradiente Icons */
+    .grad-icon-primary {
+      background: linear-gradient(135deg, var(--tryvia-blue), var(--tryvia-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .grad-icon-success {
+      background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .grad-icon-warning {
+      background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .grad-icon-danger {
+      background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Hover effects */
     .summary .box:hover,
     .summary .details-nps-card:hover,
     .dashboard-chart-container:hover,
@@ -702,42 +727,42 @@
     <div class="summary-wrapper">
       <div class="summary" role="list">
         <div id="totalCard" class="box small-box fade-in">
-          <div class="kpi-label"><i class="fas fa-chart-line"></i> Total de Respostas</div>
+          <div class="kpi-label"><i class="fas fa-chart-line grad-icon-primary"></i> Total de Respostas</div>
           <div id="totalResponses" class="kpi-value">—</div>
         </div>
 
         <div id="npsCard" class="box small-box geral pulse">
-          <div class="kpi-label"><i class="fas fa-star"></i> NPS Atual</div>
+          <div class="kpi-label"><i class="fas fa-star grad-icon-primary"></i> NPS Atual</div>
           <div id="npsValue" class="kpi-value">—</div>
         </div>
 
         <div id="promCard" class="box small-box saude fade-in">
-          <div class="kpi-label"><i class="fas fa-smile"></i> % Promotores</div>
+          <div class="kpi-label"><i class="fas fa-smile grad-icon-success"></i> % Promotores</div>
           <div id="pctPromoters" class="kpi-value">—</div>
         </div>
 
         <div id="neuCard" class="box small-box atencao fade-in">
-          <div class="kpi-label"><i class="fas fa-meh"></i> % Neutros</div>
+          <div class="kpi-label"><i class="fas fa-meh grad-icon-warning"></i> % Neutros</div>
           <div id="pctNeutrals" class="kpi-value">—</div>
         </div>
 
         <div id="detCard" class="box small-box critico fade-in">
-          <div class="kpi-label"><i class="fas fa-frown"></i> % Detratores</div>
+          <div class="kpi-label"><i class="fas fa-frown grad-icon-danger"></i> % Detratores</div>
           <div id="pctDetractors" class="kpi-value">—</div>
         </div>
 
         <div class="box saude fade-in">
-          <div class="kpi-label"><i class="fas fa-thumbs-up"></i> Qntd Promotores</div>
+          <div class="kpi-label"><i class="fas fa-thumbs-up grad-icon-success"></i> Qntd Promotores</div>
           <div id="promotersDetail" class="kpi-value">—</div>
         </div>
 
         <div class="box atencao fade-in">
-          <div class="kpi-label"><i class="fas fa-minus-circle"></i> Qntd Neutros</div>
+          <div class="kpi-label"><i class="fas fa-minus-circle grad-icon-warning"></i> Qntd Neutros</div>
           <div id="neutralsDetail" class="kpi-value">—</div>
         </div>
 
         <div class="box critico fade-in">
-          <div class="kpi-label"><i class="fas fa-thumbs-down"></i> Qntd Detratores</div>
+          <div class="kpi-label"><i class="fas fa-thumbs-down grad-icon-danger"></i> Qntd Detratores</div>
           <div id="detractorsDetail" class="kpi-value">—</div>
         </div>
       </div>
@@ -950,7 +975,29 @@
 
       // update UI
       document.getElementById('totalResponses').innerText = total;
-      document.getElementById('npsValue').innerText = (nps > 0 ? '+' + nps : nps);
+
+      const npsCard = document.getElementById('npsCard');
+      const npsValueEl = document.getElementById('npsValue');
+      const npsIcon = npsCard.querySelector('i');
+
+      npsValueEl.innerText = (nps > 0 ? '+' + nps : nps);
+
+      // Lógica Cognitiva NPS (Cor do Card e Ícone)
+      // > 89: Verde, 70-89: Amarelo, < 70: Vermelho
+      npsCard.classList.remove('geral', 'saude', 'atencao', 'critico');
+      npsIcon.classList.remove('grad-icon-primary', 'grad-icon-success', 'grad-icon-warning', 'grad-icon-danger');
+
+      if (nps > 89) {
+        npsCard.classList.add('saude');
+        npsIcon.classList.add('grad-icon-success');
+      } else if (nps >= 70) {
+        npsCard.classList.add('atencao');
+        npsIcon.classList.add('grad-icon-warning');
+      } else {
+        npsCard.classList.add('critico');
+        npsIcon.classList.add('grad-icon-danger');
+      }
+
       document.getElementById('pctPromoters').innerText = total ? ((promoters / total * 100).toFixed(0) + '%') : '—';
       document.getElementById('pctNeutrals').innerText = total ? ((neutrals / total * 100).toFixed(0) + '%') : '—';
       document.getElementById('pctDetractors').innerText = total ? ((detractors / total * 100).toFixed(0) + '%') : '—';
