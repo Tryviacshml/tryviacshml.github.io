@@ -1098,10 +1098,10 @@
 
     .dashboard-rankings-row {
       width: 100%;
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 24px;
       margin: 20px 0;
-      align-items: stretch;
     }
 
     .dashboard-ranking-container {
@@ -1421,6 +1421,39 @@
       background: linear-gradient(135deg, #ff5252 0%, #e53935 100%);
       transform: translateY(-2px) scale(1.05);
       box-shadow: 0 6px 20px rgba(255, 71, 87, 0.45);
+    }
+
+    /* RESPONSIVIDADE (Cópia exata do NPS) */
+    @media (max-width: 1100px) {
+      .summary {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .dashboard-charts-row,
+      .dashboard-rankings-row {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-ranking-container {
+        height: auto;
+        min-height: 400px;
+      }
+
+      #siteTitle {
+        font-size: 20px;
+      }
+
+      #siteSubtitle {
+        font-size: 11px;
+      }
+
+      .header-inner {
+        padding: 0 16px;
+      }
+
+      .search-input {
+        width: 180px;
+      }
     }
 
     .help-btn {
@@ -8652,10 +8685,37 @@
       </div>
     </div>
   </div>
-<!-- Ecosystem badges injection -->
-<style id="ecos-badges-style">.ecos-nav-badges{display:inline-flex;gap:8px;margin-left:6px}.ecos-badge{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--tryvia-accent-gradient);color:#fff;font-weight:800;font-size:12px;border:1px solid rgba(0,212,255,0.2);box-shadow:var(--tryvia-card-shadow);cursor:pointer;user-select:none}.ecos-badge:hover{transform:translateY(-1px)}</style>
-<script id="ecos-badges-script">(function(){function onClick(e){const a=e.target.closest('.ecos-badge');if(!a)return;const r=a.dataset.route;try{if(window.top&&window.top!==window){window.top.location.hash=(r==='nps')?'#/nps':'#/chs';return;}}catch(_){}var here=(location.pathname||'').replace(/\\\\/g,'/');if(r==='nps'){location.href=here.includes('/nps/')?location.href:'../nps/okokok.html';}else{location.href=here.includes('/chs/')?location.href:'../chs/padrao.html';}}function ensure(){if(document.getElementById('ecos-badges'))return;var left=document.querySelector('.header-inner .left')||document.querySelector('.left');if(!left)return;var nav=document.createElement('nav');nav.id='ecos-badges';nav.className='ecos-nav-badges';nav.innerHTML='<a class="ecos-badge" data-route="chs" title="Customer Health Score">CHS</a><a class="ecos-badge" data-route="nps" title="Net Promoter Score">NPS</a>';nav.addEventListener('click',onClick);left.appendChild(nav);}if(document.readyState!=='loading')ensure();else document.addEventListener('DOMContentLoaded',ensure);})();</script>
+  <!-- Ecosystem badges injection -->
+  <style id="ecos-badges-style">
+    .ecos-nav-badges {
+      display: inline-flex;
+      gap: 8px;
+      margin-left: 6px
+    }
+
+    .ecos-badge {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--tryvia-accent-gradient);
+      color: #fff;
+      font-weight: 800;
+      font-size: 12px;
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      box-shadow: var(--tryvia-card-shadow);
+      cursor: pointer;
+      user-select: none
+    }
+
+    .ecos-badge:hover {
+      transform: translateY(-1px)
+    }
+  </style>
+  <script
+    id="ecos-badges-script">(function () { function onClick(e) { const a = e.target.closest('.ecos-badge'); if (!a) return; const r = a.dataset.route; try { if (window.top && window.top !== window) { window.top.location.hash = (r === 'nps') ? '#/nps' : '#/chs'; return; } } catch (_) { } var here = (location.pathname || '').replace(/\\\\/g, '/'); if (r === 'nps') { location.href = here.includes('/nps/') ? location.href : '../nps/okokok.html'; } else { location.href = here.includes('/chs/') ? location.href : '../chs/padrao.html'; } } function ensure() { if (document.getElementById('ecos-badges')) return; var left = document.querySelector('.header-inner .left') || document.querySelector('.left'); if (!left) return; var nav = document.createElement('nav'); nav.id = 'ecos-badges'; nav.className = 'ecos-nav-badges'; nav.innerHTML = '<a class="ecos-badge" data-route="chs" title="Customer Health Score">CHS</a><a class="ecos-badge" data-route="nps" title="Net Promoter Score">NPS</a>'; nav.addEventListener('click', onClick); left.appendChild(nav); } if (document.readyState !== 'loading') ensure(); else document.addEventListener('DOMContentLoaded', ensure); })();</script>
 </body>
 
 </html>
-
